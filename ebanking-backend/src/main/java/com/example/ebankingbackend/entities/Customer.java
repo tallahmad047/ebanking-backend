@@ -5,6 +5,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 @Entity
 @Data @NoArgsConstructor @AllArgsConstructor
@@ -14,6 +17,7 @@ public class Customer {
     private String name;
     private String email;
     @OneToMany(mappedBy = "customer")
-    private List<BankAccount> bankAccounts;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private List<BankAccount> bankAccounts;//1H21:48
 
 }
