@@ -1,14 +1,17 @@
 package com.example.ebankingbackend.service;
 
+
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-import javax.management.RuntimeErrorException;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
+import com.example.ebankingbackend.dtos.CustomerDTO;
 import com.example.ebankingbackend.entities.AccountOperation;
 import com.example.ebankingbackend.entities.BankAccount;
 import com.example.ebankingbackend.entities.CurrentAccount;
@@ -18,6 +21,7 @@ import com.example.ebankingbackend.enums.OperationType;
 import com.example.ebankingbackend.exceptions.BankAccountNotFoundException;
 import com.example.ebankingbackend.exceptions.BanlanceNotSufficentException;
 import com.example.ebankingbackend.exceptions.CustomerNotFoundException;
+import com.example.ebankingbackend.mappers.BankAccountMapperImpl;
 import com.example.ebankingbackend.repositories.AccountOperationRepository;
 import com.example.ebankingbackend.repositories.BankAccountRepository;
 import com.example.ebankingbackend.repositories.CustomerRepository;
@@ -32,22 +36,27 @@ public class BanskAccountServiceImpl implements BankAccountService {
 
     private BankAccountRepository bankAccountRepository;
     private AccountOperationRepository accountOperationRepository;
+    private BankAccountMapperImpl dtoMapper;
+
+   
     
 
     public BanskAccountServiceImpl(CustomerRepository customerRepository,
             BankAccountRepository bankAccountRepository,
-            AccountOperationRepository accountOperationRepository) {
+            AccountOperationRepository accountOperationRepository,BankAccountMapperImpl dtoMapper) {
         this.customerRepository = customerRepository;
         this.bankAccountRepository = bankAccountRepository;
         this.accountOperationRepository = accountOperationRepository;
+        this.dtoMapper=dtoMapper;
     }
 
 
     @Override
-    public Customer saveCustomer(Customer customer) {
+    public CustomerDTO saveCustomer(CustomerDTO customerDTO) {
         log.info("saving a new customer");
+        Customer customer=dtoMapper.fromCustomerDTO(customerDTO);
         Customer saveCustomer= customerRepository.save(customer);
-        return saveCustomer;
+        return dtoMapper.fromCustomer(saveCustomer);
     }
 
 
@@ -87,10 +96,21 @@ public class BanskAccountServiceImpl implements BankAccountService {
 
 
     @Override
-    public List<Customer> listCustomer() {
+    public List<CustomerDTO> listCustomer() {
+        List<Customer> customers= customerRepository.findAll();
+       List<CustomerDTO> customerDTOs = customers.stream().
+       map(customer ->dtoMapper.fromCustomer(customer))
+        .collect(Collectors.toList());
+      /*
+      List<CustomerDTO> customerDTOs=new ArrayList<>();
+       for (Customer customer:customers){
+        CustomerDTO customerDTO=dtoMapper.fromCustomer(customer);
+        customerDTOs.add(customerDTO);
+           } */ 
         
-        return customerRepository.findAll();
+        return customerDTOs;
     }
+
 
 
     @Override
@@ -146,6 +166,23 @@ public class BanskAccountServiceImpl implements BankAccountService {
     @Override
     public List<BankAccount> bankAccountList(){
         return bankAccountRepository.findAll();
+    }
+    @Override
+    public CustomerDTO getCustomer(Long customerId)throws CustomerNotFoundException{
+       Customer customer=  customerRepository.findById(customerId)
+        .orElseThrow(()->new CustomerNotFoundException("Cusmoter not found"));
+        return dtoMapper.fromCustomer(customer);
+    }
+    @Override
+    public CustomerDTO updateCustomer(CustomerDTO customerDTO) {
+        log.info("saving a new customer");
+        Customer customer=dtoMapper.fromCustomerDTO(customerDTO);
+        Customer saveCustomer= customerRepository.save(customer);
+        return dtoMapper.fromCustomer(saveCustomer);
+    }
+   @Override
+    public void deleteCustomer(Long customerId){
+        customerRepository.deleteById(customerId);
     }
 
   
