@@ -50,5 +50,5 @@ public class CustomerRestController {
     public void deleteCustomer (@PathVariable Long id){
         bankAccountService.deleteCustomer(id);
 
-    }//2H12 
+    }
 }
