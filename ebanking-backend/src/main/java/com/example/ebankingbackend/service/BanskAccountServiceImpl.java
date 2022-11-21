@@ -167,7 +167,8 @@ public class BanskAccountServiceImpl implements BankAccountService {
 
 
     @Override
-    public void transfert(String accoundIdSource, String accoundIdDestination, double amount) throws BankAccountNotFoundException, BanlanceNotSufficentException {
+    public void transfert(String accoundIdSource, String accoundIdDestination, double amount) throws BankAccountNotFoundException,
+            BanlanceNotSufficentException {
        debit(accoundIdSource, amount, "transfert"+accoundIdDestination);
        credit(accoundIdDestination, amount, "transfert from"+accoundIdSource);
         
@@ -216,7 +217,7 @@ public class BanskAccountServiceImpl implements BankAccountService {
         BankAccount bankAccount=bankAccountRepository.findById(accountId).orElse(null);
         if (bankAccount==null)throw  new BankAccountNotFoundException("Account not found");
         Page<AccountOperation> accountOperations=accountOperationRepository.
-                findByBankAccountId(accountId, PageRequest.of(page, size));
+                findByBankAccountIdOrderByOperationDateDesc(accountId, PageRequest.of(page, size));
         AccountHistoryDTO accountHistoryDTO=new AccountHistoryDTO();
         List<AccountOperationDTO> accountOperationDTOS=accountOperations.getContent().stream().map(op->
                 dtoMapper.fromAccountOperation(op)).collect(Collectors.toList());
@@ -227,6 +228,13 @@ public class BanskAccountServiceImpl implements BankAccountService {
         accountHistoryDTO.setPageSize(size);
         accountHistoryDTO.setTotalPages(accountOperations.getTotalPages());
         return accountHistoryDTO;
+    }
+
+    @Override
+    public List<CustomerDTO> searchCustomer(String keyword) {
+        List<Customer> customers=customerRepository.searchCustomer(keyword);
+        List<CustomerDTO> customerDTO = customers.stream().map(customer -> dtoMapper.fromCustomer(customer)).collect(Collectors.toList());
+        return customerDTO;
     }
 
 
