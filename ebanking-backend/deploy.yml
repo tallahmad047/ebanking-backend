@@ -1,0 +1,22 @@
+---
+- name: Deploy Spring Backend Application to Tomcat
+  hosts: tomcat_server
+  become: yes
+
+  tasks:
+    - name: Check if Tomcat is installed
+      command: test -d /usr/local/tomcat
+
+      register: tomcat_check
+
+    - name: Copy WAR file to Tomcat webapps directory
+      copy:
+        src: "{{ war_file }}"
+        dest: "/usr/local/tomcat/webapps/{{ war_file }}"
+      when: tomcat_check.rc == 0
+
+    - name: Restart Tomcat
+      service:
+        name: tomcat
+        state: restarted
+      when: tomcat_check.rc == 0
