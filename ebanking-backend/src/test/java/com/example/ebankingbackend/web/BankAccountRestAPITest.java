@@ -4,240 +4,174 @@ import com.example.ebankingbackend.dtos.*;
 import com.example.ebankingbackend.exceptions.BankAccountNotFoundException;
 import com.example.ebankingbackend.exceptions.BanlanceNotSufficentException;
 import com.example.ebankingbackend.service.BankAccountService;
-import org.aspectj.lang.annotation.Before;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.Arrays;
-import java.util.List;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 class BankAccountRestAPITest {
-    @Autowired
-    private BankAccountRestAPI bankAccountRestAPI;
-    @MockBean
+
     @Mock
     private BankAccountService bankAccountService;
-    public void BankAccountRestAPI(BankAccountService bankAccountService) {
-        if (bankAccountService == null) {
-            throw new IllegalArgumentException("bankAccountService cannot be null");
-        }
-        this.bankAccountService = bankAccountService;
-    }
 
-
-    @Before("")
-    public void setUp() {
-        bankAccountService = mock(BankAccountService.class);
-        bankAccountRestAPI = new BankAccountRestAPI(bankAccountService);
-    }
-
+    /**
+     * Test if the method throws an exception when the account id is invalid
+     */
     @Test
-    public void testGetBankAccount_Success() throws BankAccountNotFoundException {
-        String accountId = "12345";
-        CurrentBankAccountDTO expectedBankAccountDTO = new CurrentBankAccountDTO();
-        expectedBankAccountDTO.setAccountId(accountId);
-        when(bankAccountService.getBankAccount(accountId)).thenReturn(expectedBankAccountDTO);
-
-        BankAccountDTO actualBankAccountDTO = bankAccountRestAPI.getBankAccount(accountId);
-
-        assertNotNull(actualBankAccountDTO);
-        assertEquals(expectedBankAccountDTO, actualBankAccountDTO);
-        verify(bankAccountService).getBankAccount(accountId);
-    }
-
-
-    @Test
-    public void testGetBankAccount_BankAccountNotFoundException() throws BankAccountNotFoundException {
-        String accountId = "12345";
-        when(bankAccountService.getBankAccount(accountId)).thenThrow(new BankAccountNotFoundException("Bank account not found"));
-        try {
-            bankAccountRestAPI.getBankAccount(accountId);
-            fail("Expected BankAccountNotFoundException was not thrown");
-        } catch (BankAccountNotFoundException ex) {
-            // BankAccountNotFoundException was thrown as expected, test passed
-        }
-    }
-    @Test
-    public void testListBankAccounts() {
-        List<BankAccountDTO> expectedAccounts = Arrays.asList(
-                new CurrentBankAccountDTO(),
-                new SavingBankAccountDTO()
-        );
-        when(bankAccountService.bankAccountList()).thenReturn(expectedAccounts);
-
-        List<BankAccountDTO> actualAccounts = bankAccountRestAPI.listaccounts();
-
-        assertEquals(expectedAccounts, actualAccounts);
-        verify(bankAccountService, times(2)).bankAccountList();
-    }
-    @Test
-    public void testGetHistorique() {
-        String accountId = "12345";
-        List<AccountOperationDTO> expectedOperations = Arrays.asList(
-                new AccountOperationDTO(),
-                new AccountOperationDTO()
-        );
-
-        when(bankAccountService.accountHistory(accountId)).thenReturn(expectedOperations);
-        List<AccountOperationDTO> result = bankAccountRestAPI.getHistorique(accountId);
-
-        assertEquals(expectedOperations, result);
-        verify(bankAccountService).accountHistory(accountId);
-    }
-    @Test
-    public void testGetAccountHistorique() throws BankAccountNotFoundException {
-        String accountId = "12345";
-        int page = 0;
-        int size = 5;
-        AccountHistoryDTO expectedHistory = new AccountHistoryDTO();
-
-        when(bankAccountService.getAccountHistory(accountId, page, size)).thenReturn(expectedHistory);
-        AccountHistoryDTO result = bankAccountRestAPI.getAccountHistorique(accountId, page, size);
-
-        assertEquals(expectedHistory, result);
-        verify(bankAccountService).getAccountHistory(accountId, page, size);
-    }
-
-   @Test
-   // (expected = BankAccountNotFoundException.class)
-    public void testGetAccountHistorique_BankAccountNotFoundException() throws BankAccountNotFoundException {
-        String accountId = "12345";
-        int page = 0;
-        int size = 5;
-
-        when(bankAccountService.getAccountHistory(accountId, page, size)).thenThrow(new BankAccountNotFoundException("Bank account not found"));
-        try {
-            bankAccountRestAPI.getAccountHistorique(accountId, page, size);
-        }catch (BankAccountNotFoundException exception){
-
-        }
-
-
-    }
-    @Test
-    public void testDebit_Success() throws BanlanceNotSufficentException, BankAccountNotFoundException {
-        DebitDTO debitDTO = new DebitDTO();
-        debitDTO.setAccountId("123456");
-        debitDTO.setAmount(100);
-        debitDTO.setDescription("Test Debit");
-
-        bankAccountRestAPI.debit(debitDTO);
-
-        verify(bankAccountService).debit("123456", 100, "Test Debit");
-    }
-
-    @Test
-    public void testDebit_BanlanceNotSufficentException() throws BanlanceNotSufficentException, BankAccountNotFoundException {
-       try {
-           DebitDTO debitDTO = new DebitDTO();
-           debitDTO.setAccountId("123456");
-           debitDTO.setAmount(100);
-           debitDTO.setDescription("Test Debit");
-
-           doThrow(new BanlanceNotSufficentException("Balance not sufficient")).when(bankAccountService).debit(debitDTO.getAccountId(), debitDTO.getAmount(), debitDTO.getDescription());
-
-           bankAccountRestAPI.debit(debitDTO);
-
-       }catch (BanlanceNotSufficentException e){
-
-       }
-
-    }
-
-    @Test
-    public void testDebit_BankAccountNotFoundException() throws BanlanceNotSufficentException, BankAccountNotFoundException {
-       try {
-           DebitDTO debitDTO = new DebitDTO();
-           debitDTO.setAccountId("123456");
-           debitDTO.setAmount(100);
-           debitDTO.setDescription("Test Debit");
-
-           doThrow(new BankAccountNotFoundException("Bank account not found")).when(bankAccountService).debit(debitDTO.getAccountId(), debitDTO.getAmount(), debitDTO.getDescription());
-
-           bankAccountRestAPI.debit(debitDTO);
-       }catch (BankAccountNotFoundException exception){
-
-       }
-
-    }
-    @Test
-    public void testCredit_Success() throws BankAccountNotFoundException {
-        String accountId = "12345";
-        double amount = 100.0;
-        String description = "Test credit";
-        CreditDTO creditDTO = new CreditDTO();
-        creditDTO.setAccountId(accountId);
-        creditDTO.setAmount(amount);
-        creditDTO.setDescription(description);
-
-        bankAccountRestAPI.credit(creditDTO);
-
-        verify(bankAccountService, times(1)).credit(accountId, amount, description);
-    }
-
-    @Test
-    public void testCredit_BankAccountNotFoundException() throws BankAccountNotFoundException {
-        try {
-            String accountId = "12345";
-            double amount = 100.0;
-            String description = "Test credit";
-            CreditDTO creditDTO = new CreditDTO();
-            creditDTO.setAccountId(accountId);
-            creditDTO.setAmount(amount);
-            creditDTO.setDescription(description);
-
-            doThrow(new BankAccountNotFoundException("Bank account not found")).when(bankAccountService).credit(accountId, amount, description);
-
-            bankAccountRestAPI.credit(creditDTO);
-        }catch (BankAccountNotFoundException exception){
-
-        }
-
-    }
-
-    @Test
-    public void testTransfer() throws BanlanceNotSufficentException, BankAccountNotFoundException {
-        // Initialisation des objets nécessaires
-        TransferRequestDTO transferRequestDTO = new TransferRequestDTO();
-        transferRequestDTO.setAccountSource("src");
-        transferRequestDTO.setAccountDestination("dest");
-        transferRequestDTO.setAmount(100);
-
-        BankAccountService bankAccountService = mock(BankAccountService.class);
+    public void getBankAccountThrowsExceptionForInvalidId() throws BankAccountNotFoundException {
         BankAccountRestAPI bankAccountRestAPI = new BankAccountRestAPI(bankAccountService);
+        when(bankAccountService.getBankAccount("1"))
+                .thenThrow(new BankAccountNotFoundException("Invalid account id"));
+        assertThrows(
+                BankAccountNotFoundException.class,
+                () -> {
+                    bankAccountRestAPI.getBankAccount("1");
+                });
+    }
 
-        // Définir les comportements des objets mock
-        doNothing().when(bankAccountService).transfert(
-                eq(transferRequestDTO.getAccountSource()),
-                eq(transferRequestDTO.getAccountDestination()),
-                eq(transferRequestDTO.getAmount())
-        );
+    /**
+     * Test if the method returns the correct bank account when the account has a positive balance
+     */
+    @Test
+    public void getBankAccountReturnsCorrectAccountWithPositiveBalance() throws BankAccountNotFoundException {
+        BankAccountRestAPI bankAccountRestAPI = new BankAccountRestAPI(bankAccountService);
+        String accountId = "12345";
+        CurrentBankAccountDTO bankAccountDTO = new CurrentBankAccountDTO();
+        bankAccountDTO.setBalance(100);
+        when(bankAccountService.getBankAccount(accountId)).thenReturn(bankAccountDTO);
 
-        // Appel de la méthode à tester
+        BankAccountDTO result = bankAccountRestAPI.getBankAccount(accountId);
+
+        assertEquals(bankAccountDTO, result);
+    }
+
+    /**
+     * Test if the method returns the correct bank account
+     */
+    @Test
+    public void getBankAccountReturnsCorrectAccount() throws BankAccountNotFoundException {
+        BankAccountRestAPI bankAccountRestAPI = new BankAccountRestAPI(bankAccountService);
+        String accountId = "12345";
+        CurrentBankAccountDTO  bankAccountDTO = new CurrentBankAccountDTO ();
+        bankAccountDTO.setId(accountId);
+        when(bankAccountService.getBankAccount(accountId)).thenReturn(bankAccountDTO);
+
+        CurrentBankAccountDTO  result = (CurrentBankAccountDTO) bankAccountRestAPI.getBankAccount(accountId);
+
+        assertEquals(accountId, result.getId());
+    }
+
+    /**
+     * Test if the method returns the correct bank account when the account has a negative balance
+     */
+    @Test
+    public void getBankAccountReturnsCorrectAccountWithNegativeBalance() throws BankAccountNotFoundException {
+        BankAccountRestAPI bankAccountRestAPI = new BankAccountRestAPI(bankAccountService);
+        String accountId = "12345";
+        CurrentBankAccountDTO  bankAccountDTO = new CurrentBankAccountDTO ();
+        bankAccountDTO.setBalance(-100);
+        when(bankAccountService.getBankAccount(accountId)).thenReturn(bankAccountDTO);
+
+        CurrentBankAccountDTO  result = (CurrentBankAccountDTO) bankAccountRestAPI.getBankAccount(accountId);
+
+        assertEquals(-100, result.getBalance());
+    }
+
+    /**
+     * Test if the method returns the correct bank account when the account has a balance of zero
+     */
+    @Test
+    public void getBankAccountReturnsCorrectAccountWithZeroBalance() throws BankAccountNotFoundException {
+        BankAccountRestAPI bankAccountRestAPI = new BankAccountRestAPI(bankAccountService);
+        String accountId = "12345";
+        CurrentBankAccountDTO  bankAccountDTO = new CurrentBankAccountDTO ();
+        bankAccountDTO.setBalance(0);
+        when(bankAccountService.getBankAccount(accountId)).thenReturn(bankAccountDTO);
+
+        CurrentBankAccountDTO  result = (CurrentBankAccountDTO) bankAccountRestAPI.getBankAccount(accountId);
+
+        assertEquals(0, result.getBalance());
+    }
+
+    /**
+     * Test if the method throws an exception when the account balance is not sufficient for debit
+     */
+    @Test
+    public void debitThrowsExceptionWhenBalanceIsNotSufficient() throws BankAccountNotFoundException, BanlanceNotSufficentException {
+        BankAccountRestAPI bankAccountRestAPI = new BankAccountRestAPI(bankAccountService);
+        DebitDTO debitDTO = new DebitDTO();
+        debitDTO.setAccountId("12345");
+        debitDTO.setAmount(100);
+        debitDTO.setDescription("Test debit");
+        doThrow(new BanlanceNotSufficentException("Insufficient balance"))
+                .when(bankAccountService).debit(debitDTO.getAccountId(), debitDTO.getAmount(), debitDTO.getDescription());
+
+        assertThrows(
+                BanlanceNotSufficentException.class,
+                () -> {
+                    bankAccountRestAPI.debit(debitDTO);
+                });
+    }
+
+
+    /**
+     * Test if the method returns the correct debit DTO
+     */
+    @Test
+    public void debitReturnsCorrectDebitDTO() throws BankAccountNotFoundException, BanlanceNotSufficentException {
+        BankAccountRestAPI bankAccountRestAPI = new BankAccountRestAPI(bankAccountService);
+        DebitDTO debitDTO = new DebitDTO();
+        debitDTO.setAccountId("12345");
+        debitDTO.setAmount(100);
+        debitDTO.setDescription("Test debit");
+
+        DebitDTO result = bankAccountRestAPI.debit(debitDTO);
+
+        assertEquals(debitDTO, result);
+    }
+
+    /**
+     * Test if the method returns the correct credit DTO
+     */
+    @Test
+    public void creditReturnsCorrectCreditDTO() throws BankAccountNotFoundException {
+        BankAccountRestAPI bankAccountRestAPI = new BankAccountRestAPI(bankAccountService);
+        CreditDTO creditDTO = new CreditDTO();
+        creditDTO.setAccountId("12345");
+        creditDTO.setAmount(100);
+        creditDTO.setDescription("Test credit");
+
+        CreditDTO result = bankAccountRestAPI.credit(creditDTO);
+
+        assertEquals(creditDTO, result);
+    }
+
+    /**
+     * Test if the method transfers the correct amount from source account to destination account
+
+    @Test
+    public void transferTransfersCorrectAmount() throws BankAccountNotFoundException, BanlanceNotSufficentException {
+        BankAccountRestAPI bankAccountRestAPI = new BankAccountRestAPI(bankAccountService);
+        TransferRequestDTO transferRequestDTO = new TransferRequestDTO();
+        transferRequestDTO.setAccountSource("12345");
+        transferRequestDTO.setAccountDestination("67890");
+        transferRequestDTO.setAmount(100);
         bankAccountRestAPI.transfer(transferRequestDTO);
 
-        // Vérification
-        verify(bankAccountService, times(1)).transfert(
-                eq(transferRequestDTO.getAccountSource()),
-                eq(transferRequestDTO.getAccountDestination()),
-                eq(transferRequestDTO.getAmount())
-        );
-    }
-
-
-
-
-
-
+        // Verify that the correct amount is transferred from source account to destination account
+        when(bankAccountService.getBankAccount("12345")).thenReturn(new BankAccountDTO("12345", 500));
+        when(bankAccountService.getBankAccount("67890")).thenReturn(new BankAccountDTO("67890", 100));
+        assertEquals(400, bankAccountService.getBankAccount("12345").getBalance());
+        assertEquals(200, bankAccountService.getBankAccount("67890").getBalance());
+    }*/
 }

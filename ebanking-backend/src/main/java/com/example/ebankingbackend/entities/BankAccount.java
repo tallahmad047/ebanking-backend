@@ -21,7 +21,7 @@ public class BankAccount {
     private AccountStatus status;
     @ManyToOne
     private Customer customer;
-    @OneToMany(mappedBy="bankAccount",fetch = FetchType.LAZY)
+    @OneToMany(mappedBy="bankAccount",fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     //lazy veut dire chargement les attributs de ce compte EAger veut dire de charger les oprations à chaque fois
     // quont charge un compte il est dengereux car il charge bcp de donner en memoire
     private List<AccountOperation> accountOperations;
