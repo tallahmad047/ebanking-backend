@@ -1,0 +1,25 @@
+version: '3.1'
+
+services:
+  app:
+    container_name: ebanking-backebd
+    image: ebanking-backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8085:8085"
+    depends_on:
+      - dbpostgresql
+
+  dbpostgresql:
+    container_name: ebanking-backend-db
+    image: postgres:9.6
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ebanking-backend
+    volumes:
+      - ./db-data:/var/lib/postgresql/data

@@ -19,6 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
+@CrossOrigin("*")
 class CustomerRestControllerTest {
     // @MockBean
     @Mock
@@ -75,7 +77,30 @@ class CustomerRestControllerTest {
             throw new RuntimeException(e);
         }
     }
+    @Test
+    public void testCustomers() throws Exception {
+        // Créer une liste de clients factices pour simuler la réponse du service
+        List<CustomerDTO> customers = new ArrayList<>();
+        customers.add(new CustomerDTO(2l, "Awa", "Awa@gmail.com"));
+        customers.add(new CustomerDTO(3l, "Samba", "Samba@gmail.com"));
+        customers.add(new CustomerDTO(5l, "John Doe", "john.doe@example.com"));
+        customers.add(new CustomerDTO(6l, "JohnSmith", "JohnSmith@gmail.com"));
 
+
+
+        // Configurer le comportement du service pour renvoyer la liste de clients factices
+        Mockito.when(bankAccountService.listCustomer()).thenReturn(customers);
+
+        // Envoyer une requête GET à l'endpoint /customers
+        mockMvc.perform(get("/customers")
+                        .contentType(MediaType.APPLICATION_JSON))
+                // Vérifier que la réponse a un code de statut 200 (OK)
+                .andExpect(status().isOk())
+                // Vérifier que la réponse contient bien la liste de clients factices
+                .andExpect(MockMvcResultMatchers.content().json(" [ {\"id\":2.0,\"name\":\"Awa\",\"email\"\n" +
+                        " :\"Awa@gmail.com\"},{\"id\":3.0,\"name\":\"Samba\",\"email\":\"Samba@gmail.com\"}," +
+                        "{\"id\":6.0,\"name\":\"JohnSmith\",\"email\":\"JohnSmith@gmail.com\"},{\"id\":5.0,\"name\":\"John Doe\",\"email\":\"john.doe@example.com\"}]"));
+    }
     /**
      * Test if customer id is null and throws IllegalArgumentException
      */
@@ -117,20 +142,7 @@ class CustomerRestControllerTest {
     /**
      * Test if customer id is valid and customer is deleted from the database
      */
-  /*  @Test
-    public void deleteCustomerFromDatabase() {
-        Customer customer = new Customer();
-        customer.setId(1L);
-        customer.setName("John");
 
-        customer.setEmail("john@doe.com");
-
-        customerRepository.save(customer);
-
-        bankAccountRestAPI.deleteCustomer(1L);
-
-        assertEquals(0, customerRepository.count());
-    }*/
 
     /**
      * Test if customer is deleted successfully
@@ -148,11 +160,11 @@ class CustomerRestControllerTest {
      */
     @Test
     public void updateCustomerEmail() {
-        CustomerDTO customerDTO = new CustomerDTO(1L, "John", "john@gmail.com");
+        CustomerDTO customerDTO = new CustomerDTO(1L, "John", "John@gmail.com");
         //Customer customer = new Customer(1L, "John", "john@gmail.com");
         when(bankAccountService.updateCustomer(customerDTO)).thenReturn(customerDTO);
         CustomerDTO result = bankAccountService.updateCustomer(customerDTO);
-        assertEquals("john@gmail.com", result.getEmail());
+        assertEquals("John@gmail.com", result.getEmail());
     }
 
     @Test
@@ -160,7 +172,7 @@ class CustomerRestControllerTest {
         CustomerDTO customerDTO = new CustomerDTO();
         customerDTO.setId(1L);
         customerDTO.setName("John");
-        customerDTO.setEmail("john@gmail.com");
+        customerDTO.setEmail("John@gmail.com");
         Customer customer = new Customer();
         customer.setId(1L);
         customer.setName("John");
@@ -170,59 +182,8 @@ class CustomerRestControllerTest {
         assertEquals(result, customerDTO);
     }
 
-    @Test
-    public void testCustomers() throws Exception {
-        // Créer une liste de clients factices pour simuler la réponse du service
-        List<CustomerDTO> customers = new ArrayList<>();
-        customers.add(new CustomerDTO(1l, "Ahmad", "Ahmad@gmail.com"));
-        customers.add(new CustomerDTO(2l, "Awa", "Awa@gmail.com"));
-        customers.add(new CustomerDTO(2l, "Samba", "Samba@gmail.com"));
 
 
-        // Configurer le comportement du service pour renvoyer la liste de clients factices
-        Mockito.when(bankAccountService.listCustomer()).thenReturn(customers);
-
-        // Envoyer une requête GET à l'endpoint /customers
-        mockMvc.perform(get("/customers")
-                        .contentType(MediaType.APPLICATION_JSON))
-                // Vérifier que la réponse a un code de statut 200 (OK)
-                .andExpect(status().isOk())
-                // Vérifier que la réponse contient bien la liste de clients factices
-                .andExpect(MockMvcResultMatchers.content().json(" [{\"id\":1,\"name\":\"Ahmad\",\"email\":\"Ahmad@gmail.com\"},{\"id\":2,\"name\":\"Awa\",\"email\"\n" +
-                        " :\"Awa@gmail.com\"},{\"id\":3,\"name\":\"Samba\",\"email\":\"Samba@gmail.com\"}]"));
-    }
-
-    @Test
-    public void testSearchCustomers() {
-        String keyword = "Ahmad";
-        List<CustomerDTO> expectedCustomers = Arrays.asList(
-                new CustomerDTO(1l, "Ahmad", "Ahmad@gmail.com")
-                //new CustomerDTO(2l, "Awa", "Awa@gmail.com")
-        );
-        when(bankAccountService.searchCustomer("%" + keyword + "%")).thenReturn(expectedCustomers);
-
-        List<CustomerDTO> actualCustomers = bankAccountRestAPI.searchCustomers(keyword);
-
-        assertEquals(expectedCustomers, actualCustomers);
-    }
-
-    @Test
-    public void testGetCustomer_Success() throws CustomerNotFoundException {
-        Long customerId = 1L;
-        CustomerDTO customer = new CustomerDTO();
-        customer.setId(customerId);
-        customer.setName("Ahmad");
-        //customer.setLastName("Doe");
-        when(bankAccountService.getCustomer(customerId)).thenReturn(customer);
-
-        CustomerDTO result = bankAccountRestAPI.getCustomer(customerId);
-
-        assertNotNull(result);
-
-        assertEquals(customerId, result.getId());
-        assertEquals("Ahmad", result.getName());
-        //assertEquals("Doe", result.getLastName());
-    }
 
     @Test
     public void testGetCustomer_CustomerNotFoundException() throws CustomerNotFoundException {
@@ -259,4 +220,36 @@ class CustomerRestControllerTest {
         // Vérification que la méthode saveCustomer du mock a été appelée une fois avec l'objet customerDTO créé précédemment
         Mockito.verify(bankAccountService, Mockito.times(1)).saveCustomer(customerDTO);
     }
+    @Test
+    public void testGetCustomer_Success() throws CustomerNotFoundException {
+        Long customerId = 2L;
+        CustomerDTO customer = new CustomerDTO();
+        customer.setId(customerId);
+        customer.setName("Awa");
+        //customer.setLastName("Doe");
+        when(bankAccountService.getCustomer(customerId)).thenReturn(customer);
+
+        CustomerDTO result = bankAccountRestAPI.getCustomer(customerId);
+
+        assertNotNull(result);
+
+        assertEquals(customerId, result.getId());
+        assertEquals("Awa", result.getName());
+        //assertEquals("Doe", result.getLastName());
+    }
+    @Test
+    public void testSearchCustomers() {
+        String keyword = "Awa";
+        List<CustomerDTO> expectedCustomers = Arrays.asList(
+                // new CustomerDTO(1l, "Ahmad", "Ahmad@gmail.com")
+                new CustomerDTO(2l, "Awa", "Awa@gmail.com")
+        );
+        when(bankAccountService.searchCustomer("%" + keyword + "%")).thenReturn(expectedCustomers);
+
+        List<CustomerDTO> actualCustomers = bankAccountRestAPI.searchCustomers(keyword);
+
+        assertEquals(expectedCustomers, actualCustomers);
+    }
+
+
 }

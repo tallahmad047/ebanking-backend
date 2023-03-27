@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -19,6 +20,7 @@ import static org.mockito.Mockito.when;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
+@CrossOrigin("*")
 class BankAccountRestAPITest {
 
     @Mock
@@ -156,22 +158,5 @@ class BankAccountRestAPITest {
         assertEquals(creditDTO, result);
     }
 
-    /**
-     * Test if the method transfers the correct amount from source account to destination account
 
-    @Test
-    public void transferTransfersCorrectAmount() throws BankAccountNotFoundException, BanlanceNotSufficentException {
-        BankAccountRestAPI bankAccountRestAPI = new BankAccountRestAPI(bankAccountService);
-        TransferRequestDTO transferRequestDTO = new TransferRequestDTO();
-        transferRequestDTO.setAccountSource("12345");
-        transferRequestDTO.setAccountDestination("67890");
-        transferRequestDTO.setAmount(100);
-        bankAccountRestAPI.transfer(transferRequestDTO);
-
-        // Verify that the correct amount is transferred from source account to destination account
-        when(bankAccountService.getBankAccount("12345")).thenReturn(new BankAccountDTO("12345", 500));
-        when(bankAccountService.getBankAccount("67890")).thenReturn(new BankAccountDTO("67890", 100));
-        assertEquals(400, bankAccountService.getBankAccount("12345").getBalance());
-        assertEquals(200, bankAccountService.getBankAccount("67890").getBalance());
-    }*/
 }

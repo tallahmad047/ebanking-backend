@@ -122,7 +122,7 @@ public class EbankingBackendApplication {
                 
 
             });
-            //2h55min
+
         };
     }
 

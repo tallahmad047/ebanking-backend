@@ -18,7 +18,7 @@ public class Customer {
     private String email;
     @OneToMany(mappedBy = "customer",cascade = CascadeType.ALL)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    private List<BankAccount> bankAccounts;//1H21:48
+    private List<BankAccount> bankAccounts;
 
     public Customer(long id, String name, String email) {
         this.id=id;
